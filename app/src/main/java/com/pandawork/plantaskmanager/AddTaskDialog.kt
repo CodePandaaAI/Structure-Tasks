@@ -14,7 +14,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -25,11 +24,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
 @Composable
-fun AddTaskDialog(onDismissRequest: () -> Unit, onAddTask: (String, Boolean, Int) -> Unit) {
-    var taskId by remember { mutableIntStateOf(0) }
-    var isCheck by remember { mutableStateOf(true) }
-    var taskName by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = { onDismissRequest() }) {
+fun AddTaskDialog(closeDialog: () -> Unit, addNewTask: (String, Boolean) -> Unit) {
+    var isTaskCompleted by remember { mutableStateOf(true) }
+    var newTaskName by remember { mutableStateOf("") }
+    Dialog(onDismissRequest = { closeDialog() }) {
         Surface(shape = RoundedCornerShape(24.dp), modifier = Modifier.padding(8.dp)) {
             Column(
                 Modifier
@@ -44,21 +42,21 @@ fun AddTaskDialog(onDismissRequest: () -> Unit, onAddTask: (String, Boolean, Int
                             "Enter Task Name", fontFamily = FontFamily.Monospace
                         )
                     },
-                    value = taskName,
-                    onValueChange = { taskName = it },
+                    value = newTaskName,
+                    onValueChange = { newTaskName = it },
                     shape = CircleShape,
                     singleLine = true
                 )
                 Row(
                     Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
                 ) {
-                    Checkbox(checked = isCheck, onCheckedChange = {
-                        isCheck = it
+                    Checkbox(checked = isTaskCompleted, onCheckedChange = {
+                        isTaskCompleted = it
                     })
                     OutlinedButton(onClick = {
-                        onAddTask(taskName, isCheck, taskId++)
-                        taskName = ""
-                        onDismissRequest()
+                        addNewTask(newTaskName, isTaskCompleted)
+                        newTaskName = ""
+                        closeDialog()
                     }) {
                         Text(
                             "Add Task!",

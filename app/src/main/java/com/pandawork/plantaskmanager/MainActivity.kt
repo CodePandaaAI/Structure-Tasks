@@ -56,9 +56,9 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun TaskScreen(viewModel: TaskViewModel) {
-    var taskId by remember { mutableIntStateOf(0) }
-    var isDialogOpen by remember { mutableStateOf(false) }
-    val tasksList = viewModel.tasksList.collectAsState()
+    var nextTaskId by remember { mutableIntStateOf(0) }
+    var isAddTaskDialogVisible by remember { mutableStateOf(false) }
+    val tasks = viewModel.tasksList.collectAsState()
     Scaffold(topBar = {
         TopAppBar(title = {
             Text(
@@ -67,22 +67,22 @@ fun TaskScreen(viewModel: TaskViewModel) {
             )
         })
     }, floatingActionButton = {
-        FloatingActionButton(onClick = { isDialogOpen = true }) {
+        FloatingActionButton(onClick = { isAddTaskDialogVisible = true }) {
             Icon(Icons.Default.Add, contentDescription = "Add Task")
         }
     }) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             LazyColumn {
-                items(tasksList.value) { it ->
-                    TaskItem(it, removeTask = { name -> viewModel.removeTask(name) })
+                items(tasks.value) { task ->
+                    TaskItem(task, removeTask = { taskName -> viewModel.removeTask(taskName) })
                 }
             }
         }
-        if (isDialogOpen) {
+        if (isAddTaskDialogVisible) {
             AddTaskDialog(
-                onDismissRequest = { isDialogOpen = false },
-                onAddTask = { taskName, check, task ->
-                    viewModel.addTask(name = taskName, isPending = check, taskId = ++taskId)
+                closeDialog = { isAddTaskDialogVisible = false },
+                addNewTask = { name, isPending ->
+                    viewModel.addTask(name = name, pending = isPending, id = ++nextTaskId)
                 }
             )
         }
@@ -91,39 +91,40 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
 
 @Composable
-fun TaskItem(task: Task, removeTask: (String) -> Unit) {
+fun TaskItem(newTask: Task, removeTask: (String) -> Unit) {
     Surface(
-        color = Color(0xFFFF8A80),
+        color = Color(0xFFFFB74D),
         shape = RoundedCornerShape(16.dp),
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth()
     ) {
-        Row(modifier = Modifier, verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Task ${task.taskId}",
+                    "Task ${newTask.id}",
                     fontFamily = FontFamily.Monospace,
-                    fontSize = 24.sp,
-                    fontWeight = FontWeight.ExtraBold,
-                    modifier = Modifier.padding(24.dp)
-                )
-                Text(
-                    task.name,
-                    fontFamily = FontFamily.Monospace,
-                    fontSize = 24.sp,
+                    fontSize = 32.sp,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(24.dp)
                 )
                 Text(
-                    if (task.isPending) "Pending" else "Done",
+                    newTask.name,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(24.dp)
+                )
+                Text(
+                    if (newTask.pending) "Pending" else "Done",
+                    fontFamily = FontFamily.Monospace,
+                    fontWeight = FontWeight.Thin,
+                    fontSize = 16.sp,
                     modifier = Modifier.padding(24.dp)
                 )
             }
             IconButton(
-                onClick = { removeTask(task.name) },
+                onClick = { removeTask(newTask.name) },
                 modifier = Modifier.padding(end = 30.dp),
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = Color(0xffffffff)

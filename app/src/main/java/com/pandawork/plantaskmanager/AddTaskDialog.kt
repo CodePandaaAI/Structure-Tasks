@@ -23,9 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
 @Composable
-fun AddTaskDialog(closeDialog: () -> Unit, addNewTask: (String) -> Unit) {
-    var newTaskName by remember { mutableStateOf("") }
-    Dialog(onDismissRequest = { closeDialog() }) {
+fun AddTaskDialog(dismissDialog: () -> Unit, createTask: (String) -> Unit) {
+    var taskName by remember { mutableStateOf("") }
+    Dialog(onDismissRequest = { dismissDialog() }) {
         Surface(shape = RoundedCornerShape(24.dp), modifier = Modifier.padding(8.dp)) {
             Column(
                 Modifier
@@ -40,8 +40,8 @@ fun AddTaskDialog(closeDialog: () -> Unit, addNewTask: (String) -> Unit) {
                             "Enter Task Name", fontFamily = FontFamily.Monospace
                         )
                     },
-                    value = newTaskName,
-                    onValueChange = { newTaskName = it },
+                    value = taskName,
+                    onValueChange = { taskName = it },
                     shape = CircleShape,
                     singleLine = true
                 )
@@ -49,9 +49,9 @@ fun AddTaskDialog(closeDialog: () -> Unit, addNewTask: (String) -> Unit) {
                     Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
                 ) {
                     OutlinedButton(onClick = {
-                        addNewTask(newTaskName)
-                        newTaskName = ""
-                        closeDialog()
+                        createTask(taskName)
+                        taskName = ""
+                        dismissDialog()
                     }) {
                         Text(
                             "Add Task!",

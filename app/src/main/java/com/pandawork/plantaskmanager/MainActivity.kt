@@ -5,6 +5,7 @@ package com.pandawork.plantaskmanager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -14,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -48,45 +50,56 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val viewModel: TaskViewModel = viewModel()
-            TaskScreen(viewModel)
+            val taskViewModel: TaskViewModel = viewModel()
+            TaskScreen(taskViewModel)
 
         }
     }
 }
 
 @Composable
-fun TaskScreen(viewModel: TaskViewModel) {
-    var nextTaskId by remember { mutableIntStateOf(0) }
-    var isAddTaskDialogVisible by remember { mutableStateOf(false) }
-    val tasks = viewModel.tasksList.collectAsState()
+fun TaskScreen(taskViewModel: TaskViewModel) {
+    var nextAvailableTaskId by remember { mutableIntStateOf(0) }
+    var isTaskCreationDialogShown by remember { mutableStateOf(false) }
+    val taskListState = taskViewModel.taskCollectionFlow.collectAsState()
     Scaffold(topBar = {
-        TopAppBar(title = {
-            Text(
-                "Structured Tasks",
-                fontFamily = FontFamily.Monospace
-            )
-        })
+        TopAppBar(
+            title = {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
+                    Text(
+                        "Structured Tasks",
+                        fontFamily = FontFamily.Monospace
+                    )
+                    IconButton(onClick = {taskViewModel.removeCompletedTasks()}) {
+                        Icon(Icons.Default.Clear, contentDescription = "Clear Completed Tasks")
+                    }
+                }
+            }
+        )
     }, floatingActionButton = {
-        FloatingActionButton(onClick = { isAddTaskDialogVisible = true }) {
+        FloatingActionButton(onClick = { isTaskCreationDialogShown = true }) {
             Icon(Icons.Default.Add, contentDescription = "Add Task")
         }
     }) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
             LazyColumn {
-                items(tasks.value) { task ->
+                items(taskListState.value) { task ->
                     TaskItem(
                         task,
-                        removeTask = { taskName -> viewModel.removeTask(taskName) }
+                        removeTask = { taskName -> taskViewModel.removeTask(taskName) }
                     )
                 }
             }
         }
-        if (isAddTaskDialogVisible) {
+        if (isTaskCreationDialogShown) {
             AddTaskDialog(
-                closeDialog = { isAddTaskDialogVisible = false },
-                addNewTask = { name ->
-                    viewModel.addTask(name = name, pending = true, id = ++nextTaskId)
+                dismissDialog = { isTaskCreationDialogShown = false },
+                createTask = { name ->
+                    taskViewModel.addTask(taskName = name, pendingOrComplete = false, taskId = ++nextAvailableTaskId)
                 }
             )
         }
@@ -99,7 +112,7 @@ fun TaskItem(
     newTask: Task,
     removeTask: (String) -> Unit
 ) {
-    var isTaskPending by remember { mutableStateOf(newTask.pending) }
+    var isTaskPending by remember { mutableStateOf(newTask.isTaskPending) }
     Surface(
         color = Color(0xFFFFB74D),
         shape = RoundedCornerShape(16.dp),
@@ -110,7 +123,7 @@ fun TaskItem(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Task ${newTask.id}",
+                    "Task ${newTask.taskId}",
                     fontFamily = FontFamily.Default,
                     fontSize = 32.sp,
                     fontWeight = FontWeight.Bold,
@@ -118,14 +131,14 @@ fun TaskItem(
                 )
                 androidx.compose.material.Divider(thickness = 1.dp)
                 Text(
-                    newTask.name,
+                    newTask.taskName,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Normal,
                     modifier = Modifier.padding(16.dp)
                 )
                 Text(
-                    if (isTaskPending) "Done" else "Pending",
+                    if (isTaskPending) "Pending" else "Done",
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Thin,
                     fontSize = 16.sp,
@@ -136,10 +149,13 @@ fun TaskItem(
             Checkbox(
                 modifier = Modifier.padding(top = 48.dp),
                 checked = isTaskPending,
-                onCheckedChange = { isTaskPending = !isTaskPending }
+                onCheckedChange = {
+                    isTaskPending = !isTaskPending
+                    newTask.isTaskPending = isTaskPending
+                }
             )
             IconButton(
-                onClick = { removeTask(newTask.name) },
+                onClick = { removeTask(newTask.taskName) },
                 modifier = Modifier.padding(top = 48.dp, end = 30.dp),
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = Color(0xffffffff)
@@ -155,6 +171,6 @@ fun TaskItem(
 @Preview
 @Composable
 fun TaskScreenPreview() {
-    val viewModel: TaskViewModel = viewModel()
-    TaskScreen(viewModel)
+    val taskViewModel: TaskViewModel = viewModel()
+    TaskScreen(taskViewModel)
 }

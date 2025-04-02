@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -74,15 +75,18 @@ fun TaskScreen(viewModel: TaskViewModel) {
         Column(modifier = Modifier.padding(innerPadding)) {
             LazyColumn {
                 items(tasks.value) { task ->
-                    TaskItem(task, removeTask = { taskName -> viewModel.removeTask(taskName) })
+                    TaskItem(
+                        task,
+                        removeTask = { taskName -> viewModel.removeTask(taskName) }
+                    )
                 }
             }
         }
         if (isAddTaskDialogVisible) {
             AddTaskDialog(
                 closeDialog = { isAddTaskDialogVisible = false },
-                addNewTask = { name, isPending ->
-                    viewModel.addTask(name = name, pending = isPending, id = ++nextTaskId)
+                addNewTask = { name ->
+                    viewModel.addTask(name = name, pending = true, id = ++nextTaskId)
                 }
             )
         }
@@ -91,7 +95,11 @@ fun TaskScreen(viewModel: TaskViewModel) {
 
 
 @Composable
-fun TaskItem(newTask: Task, removeTask: (String) -> Unit) {
+fun TaskItem(
+    newTask: Task,
+    removeTask: (String) -> Unit
+) {
+    var isTaskPending by remember { mutableStateOf(newTask.pending) }
     Surface(
         color = Color(0xFFFFB74D),
         shape = RoundedCornerShape(16.dp),
@@ -103,29 +111,36 @@ fun TaskItem(newTask: Task, removeTask: (String) -> Unit) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     "Task ${newTask.id}",
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = FontFamily.Default,
                     fontSize = 32.sp,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.padding(24.dp)
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(16.dp)
                 )
+                androidx.compose.material.Divider(thickness = 1.dp)
                 Text(
                     newTask.name,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 24.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(24.dp)
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(16.dp)
                 )
                 Text(
-                    if (newTask.pending) "Pending" else "Done",
+                    if (isTaskPending) "Done" else "Pending",
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Thin,
                     fontSize = 16.sp,
-                    modifier = Modifier.padding(24.dp)
+                    modifier = Modifier.padding(16.dp)
                 )
             }
+
+            Checkbox(
+                modifier = Modifier.padding(top = 48.dp),
+                checked = isTaskPending,
+                onCheckedChange = { isTaskPending = !isTaskPending }
+            )
             IconButton(
                 onClick = { removeTask(newTask.name) },
-                modifier = Modifier.padding(end = 30.dp),
+                modifier = Modifier.padding(top = 48.dp, end = 30.dp),
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = Color(0xffffffff)
                 )

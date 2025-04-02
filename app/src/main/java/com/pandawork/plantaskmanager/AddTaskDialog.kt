@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -24,8 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 
 @Composable
-fun AddTaskDialog(closeDialog: () -> Unit, addNewTask: (String, Boolean) -> Unit) {
-    var isTaskCompleted by remember { mutableStateOf(true) }
+fun AddTaskDialog(closeDialog: () -> Unit, addNewTask: (String) -> Unit) {
     var newTaskName by remember { mutableStateOf("") }
     Dialog(onDismissRequest = { closeDialog() }) {
         Surface(shape = RoundedCornerShape(24.dp), modifier = Modifier.padding(8.dp)) {
@@ -50,11 +48,8 @@ fun AddTaskDialog(closeDialog: () -> Unit, addNewTask: (String, Boolean) -> Unit
                 Row(
                     Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center
                 ) {
-                    Checkbox(checked = isTaskCompleted, onCheckedChange = {
-                        isTaskCompleted = it
-                    })
                     OutlinedButton(onClick = {
-                        addNewTask(newTaskName, isTaskCompleted)
+                        addNewTask(newTaskName)
                         newTaskName = ""
                         closeDialog()
                     }) {

@@ -30,7 +30,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,7 +58,6 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun TaskScreen(taskViewModel: TaskViewModel) {
-    var nextAvailableTaskId by remember { mutableIntStateOf(0) }
     var isTaskCreationDialogShown by remember { mutableStateOf(false) }
     val taskListState = taskViewModel.taskCollectionFlow.collectAsState()
     Scaffold(topBar = {
@@ -74,7 +72,7 @@ fun TaskScreen(taskViewModel: TaskViewModel) {
                         "Structured Tasks",
                         fontFamily = FontFamily.Monospace
                     )
-                    IconButton(onClick = {taskViewModel.removeCompletedTasks()}) {
+                    IconButton(onClick = { taskViewModel.removeCompletedTasks() }) {
                         Icon(Icons.Default.Clear, contentDescription = "Clear Completed Tasks")
                     }
                 }
@@ -90,7 +88,7 @@ fun TaskScreen(taskViewModel: TaskViewModel) {
                 items(taskListState.value) { task ->
                     TaskItem(
                         task,
-                        removeTask = { taskName -> taskViewModel.removeTask(taskName) }
+                        removeTask = { taskId -> taskViewModel.removeTask(taskId) }
                     )
                 }
             }
@@ -99,7 +97,7 @@ fun TaskScreen(taskViewModel: TaskViewModel) {
             AddTaskDialog(
                 dismissDialog = { isTaskCreationDialogShown = false },
                 createTask = { name ->
-                    taskViewModel.addTask(taskName = name, pendingOrComplete = false, taskId = ++nextAvailableTaskId)
+                    taskViewModel.addTask(taskName = name, pendingOrComplete = false)
                 }
             )
         }
@@ -110,9 +108,9 @@ fun TaskScreen(taskViewModel: TaskViewModel) {
 @Composable
 fun TaskItem(
     newTask: Task,
-    removeTask: (String) -> Unit
+    removeTask: (Int) -> Unit
 ) {
-    var isTaskPending by remember { mutableStateOf(newTask.isTaskPending) }
+    var taskDone by remember { mutableStateOf(newTask.isComplete) }
     Surface(
         color = Color(0xFFFFB74D),
         shape = RoundedCornerShape(16.dp),
@@ -123,22 +121,15 @@ fun TaskItem(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    "Task ${newTask.taskId}",
-                    fontFamily = FontFamily.Default,
-                    fontSize = 32.sp,
-                    fontWeight = FontWeight.Bold,
-                    modifier = Modifier.padding(16.dp)
-                )
-                androidx.compose.material.Divider(thickness = 1.dp)
-                Text(
                     newTask.taskName,
                     fontFamily = FontFamily.Monospace,
                     fontSize = 24.sp,
                     fontWeight = FontWeight.Normal,
                     modifier = Modifier.padding(16.dp)
                 )
+                androidx.compose.material.Divider(thickness = 1.dp)
                 Text(
-                    if (isTaskPending) "Pending" else "Done",
+                    if (taskDone) "Done" else "Pending",
                     fontFamily = FontFamily.Monospace,
                     fontWeight = FontWeight.Thin,
                     fontSize = 16.sp,
@@ -147,16 +138,16 @@ fun TaskItem(
             }
 
             Checkbox(
-                modifier = Modifier.padding(top = 48.dp),
-                checked = isTaskPending,
+                modifier = Modifier.padding(top = 40.dp),
+                checked = taskDone,
                 onCheckedChange = {
-                    isTaskPending = !isTaskPending
-                    newTask.isTaskPending = isTaskPending
+                    taskDone = !taskDone
+                    newTask.isComplete = taskDone
                 }
             )
             IconButton(
-                onClick = { removeTask(newTask.taskName) },
-                modifier = Modifier.padding(top = 48.dp, end = 30.dp),
+                onClick = { removeTask(newTask.taskId) },
+                modifier = Modifier.padding(top = 40.dp, end = 30.dp),
                 colors = IconButtonDefaults.iconButtonColors(
                     containerColor = Color(0xffffffff)
                 )
